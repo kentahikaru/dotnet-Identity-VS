@@ -12,6 +12,8 @@ using Mvc.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 namespace Mvc
 {
@@ -30,10 +32,30 @@ namespace Mvc
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
                     Configuration.GetConnectionString("DefaultConnection")));
-            services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
-                .AddEntityFrameworkStores<ApplicationDbContext>();
+            //services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+            services.AddIdentity<IdentityUser, IdentityRole>()
+                .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddDefaultTokenProviders();
             services.AddControllersWithViews();
             services.AddRazorPages();
+
+            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_3_0)
+              .AddRazorPagesOptions(options =>
+              {
+                  //options.AllowAreas = true;
+                  options.Conventions.AuthorizeAreaFolder("Identity", "/Account/Manage");
+                  options.Conventions.AuthorizeAreaPage("Identity", "/Account/Logout");
+              });
+
+            services.ConfigureApplicationCookie(options =>
+            {
+                options.LoginPath = $"/Identity/Account/Login";
+                options.LogoutPath = $"/Identity/Account/Logout";
+                options.AccessDeniedPath = $"/Identity/Account/AccessDenied";
+            });
+
+            // using Microsoft.AspNetCore.Identity.UI.Services;
+            //services.AddSingleton<IEmailSender, EmailSender>();
 
             services.Configure<IdentityOptions>(options =>
             {
